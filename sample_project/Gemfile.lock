@@ -1,0 +1,17 @@
+PATH
+  remote: ..
+  specs:
+    polycrystal (0.1.0-x86_64-darwin-21)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  x86_64-darwin-21
+
+DEPENDENCIES
+  polycrystal!
+
+BUNDLED WITH
+   2.3.14
