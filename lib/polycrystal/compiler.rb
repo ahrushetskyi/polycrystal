@@ -91,7 +91,9 @@ module Polycrystal
         when /darwin/
             "-dynamic -bundle"
         when /linux/
-            "-shared -pie"
+            mapfile = File.expand_path("#{build_path}/version.map")
+            File.write(mapfile, "VERS_1.1 {\tglobal:\t\t*;};")
+            "-shared -Wl,--version-script=#{mapfile}"
         else
             raise "Unknown platform"
         end

@@ -19,3 +19,5 @@ class CrystalModule
         end
     end
 end
+
+puts CrystalModule::CrystalClass.new.return_object.some_method

@@ -13,6 +13,7 @@
 *.bak
 ext/polycrystal/*.o
 ext/polycrystal/*.bundle
+ext/polycrystal/*.so
 ext/polycrystal/mkmf.log
 ext/polycrystal/Makefile
 .byebug_history

@@ -15,7 +15,6 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/ahrushetskyi/polycrystal'
   spec.license       = 'MIT'
 
-  spec.platform = Gem::Platform::CURRENT
   spec.required_ruby_version = '>= 3.0.4'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
