@@ -82,7 +82,7 @@ module Polycrystal
     end
 
     def command
-      "#{include_paths} #{anyolite_glue} #{compiler_cmd} build #{in_file.path} --link-flags \"#{crystal_link_flags}\" -o #{outfile} --release " \
+      "#{include_paths} #{compiler_cmd} build #{in_file.path} --link-flags \"#{crystal_link_flags} #{anyolite_glue}\" -o #{outfile} --release " \
         '-Danyolite_implementation_ruby_3 -Duse_general_object_format_chars -Dexternal_ruby'
     end
 
@@ -132,14 +132,11 @@ module Polycrystal
     end
 
     def anyolite_glue
-      # "DLDFLAGS"=>"-L/Users/ahrushetskyi/.rbenv/versions/3.0.4/lib  -Wl,-undefined,dynamic_lookup -Wl,-multiply_defined,suppress"
-      env = "-L#{RbConfig::CONFIG['libdir']} #{RbConfig::CONFIG['LIBRUBYARG_SHARED']} " \
-            "#{File.expand_path("#{__dir__}/../../ext/polycrystal/data_helper.o")} " \
-            "#{File.expand_path("#{__dir__}/../../ext/polycrystal/error_helper.o")} " \
-            "#{File.expand_path("#{__dir__}/../../ext/polycrystal/return_functions.o")} " \
-            "#{File.expand_path("#{__dir__}/../../ext/polycrystal/script_helper.o")} "
-
-      "ANYOLITE_LINK_GLUE=\"#{env}\""
+      "-L#{RbConfig::CONFIG['libdir']} #{RbConfig::CONFIG['LIBRUBYARG_SHARED']} " \
+      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/data_helper.o")} " \
+      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/error_helper.o")} " \
+      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/return_functions.o")} " \
+      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/script_helper.o")} "
     end
 
     def compiler_cmd
