@@ -19,3 +19,4 @@ ext/polycrystal/Makefile
 .byebug_history
 /.vscode
 Gemfile.lock
+polycrystal-*.gem
