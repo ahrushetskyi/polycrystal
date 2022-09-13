@@ -71,21 +71,42 @@ Polycrystal::Registry.register(
     modules: ['CrystalModule'] 
 )
 
-# directory for entrypoint and compiled library. 
+# cpmpile and load 
+# should be called once, after all Polycrystal::Registry#register calls
+Polycrystal.load
+```
+
+Set custom properties
+```ruby
+# directory for crystal entrypoint and compiled library. 
 build_path = File.expand_path("#{__dir__}/build") 
 FileUtils.mkdir_p(build_path)
 
-# cpmpile and load 
-# should be called once, after all Polycrystal::Registry#register calls
-Polycrystal::Loader.new(build_path: build_path).load
+
+Polycrystal.load(
+    # directory for crystal entrypoint and compiled library. 
+    build_path: build_path,
+    # used to find lib with installed shards. SHARDS_INSTALL_PATH is used if present
+    shardfile: "./crystal/shard.yml", 
+    # Polycrystal::NO_PRECOMPILE - compile everytime
+    # Polycrystal::LAZY_COMPILE - compile if not yet compiled
+    # Polycrystal::REQUIRE_AOT - not compile, require to be precompiled
+    precompile: Polycrystal::LAZY_COMPILE, # by default
+)
 ```
 
 ## TODO
 
 1. Test suite
+2. Remove C code from this extension.
+   * C code is not required. Crystal code may be directly compiled to extension and loaded using standard `requre`
+   * To achieve that, anyolite glue files should be compiled to object files and linked to existing ruby correctly. I got segfault when I built glue files outside of ruby extension
 2. Code should not be recompiled if it was not changed
+   * Rudimentary implementation is present, but more stable is preferrable: `Polycrystal.load(precompile: Polycrystal::LAZY_COMPILE)`
 3. Ability to precompile all code on demand, e.g. for Docker images
-4. make shards work. Anyolite may be loaded from shards, if my patches are merged, or better alternatives implemented
+   * It is possible to do that right now by calling `Polycrystal.load(precompile: Polycrystal::LAZY_COMPILE)` in separate command, while loading Crystal module using `Polycrystal.load(precompile: Polycrystal::REQUIRE_AOT)`
+4. make shards work. DONE, except:
+   * Anyolite can't be loaded from shards, because it's postinstall script downloads and compiles it's own mruby 
 
 ## Development
 

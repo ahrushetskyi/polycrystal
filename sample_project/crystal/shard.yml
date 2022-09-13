@@ -1,0 +1,14 @@
+name: sample_project
+version: 0.1.0
+
+# authors:
+#   - name <email@example.com>
+
+# description: |
+#   Short description of sample_project
+
+dependencies:
+  jwt:
+    github: crystal-community/jwt
+
+# license: MIT

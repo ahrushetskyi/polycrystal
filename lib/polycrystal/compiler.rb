@@ -1,30 +1,52 @@
 # frozen_string_literal: true
 
+require 'zlib'
+
 module Polycrystal
   class Compiler
-    attr_reader :build_path, :registry
+    attr_reader :build_path, :shardfile, :registry, :precompile
 
-    def initialize(build_path:, registry: Polycrystal::Registry.instance)
+    def initialize(build_path:, shardfile: nil, registry: Polycrystal::Registry.instance, precompile: LAZY_COMPILE)
       @build_path = build_path
       @registry = registry
-      # load anyolite
-      add_anyolite
+      @shardfile = shardfile
+      @precompile = precompile
     end
 
     def prepare
       # load anyolite
       add_anyolite
+      # add lib with shards
+      use_shards
       # write crystal entrypoint
       in_file.write(entrypoint)
       in_file.close
     end
 
     def execute
-      # run compiler
-      puts command
-      raise 'Failed to compile crystal module' unless system(command)
+      if precompile == NO_PRECOMPILE
+        compile
+      elsif precompile == REQUIRE_AOT
+        raise 'Crystal module should be compiled before run' unless File.exist?(outfile)
+      else
+        compile unless File.exist?(outfile)
+      end
 
       outfile
+    end
+
+    private
+
+    def use_shards
+      shard_path = ENV.fetch('SHARDS_INSTALL_PATH') do
+        return unless shardfile
+
+        shardfile_path = File.expand_path(shardfile)
+        return unless File.exist?(shardfile_path)
+
+        "#{File.dirname(shardfile_path)}/lib"
+      end
+      registry.register(path: shard_path)
     end
 
     def add_anyolite
@@ -87,16 +109,16 @@ module Polycrystal
     end
 
     def crystal_link_flags
-        case RUBY_PLATFORM
-        when /darwin/
-            "-dynamic -bundle"
-        when /linux/
-            mapfile = File.expand_path("#{build_path}/version.map")
-            File.write(mapfile, "VERS_1.1 {\tglobal:\t\t*;};")
-            "-shared -Wl,--version-script=#{mapfile}"
-        else
-            raise "Unknown platform"
-        end
+      case RUBY_PLATFORM
+      when /darwin/
+        '-dynamic -bundle'
+      when /linux/
+        mapfile = File.expand_path("#{build_path}/version.map")
+        File.write(mapfile, "VERS_1.1 {\tglobal:\t\t*;};")
+        "-shared -Wl,--version-script=#{mapfile}"
+      else
+        raise 'Unknown platform'
+      end
     end
 
     def pad_line(line, n)
@@ -112,31 +134,31 @@ module Polycrystal
     end
 
     def outfile
-      File.expand_path("#{build_path}/polycrystal_module.#{lib_ext}")
+      @outfile ||= File.expand_path("#{build_path}/polycrystal#{compile_hash}_module.#{lib_ext}")
     end
 
     def lib_ext
-        case RUBY_PLATFORM
-        when /darwin/
-            "bundle"
-        when /linux/
-            "so"
-        else
-            raise "Unknown platform"
-        end
+      case RUBY_PLATFORM
+      when /darwin/
+        'bundle'
+      when /linux/
+        'so'
+      else
+        raise 'Unknown platform'
+      end
     end
 
     def include_paths
-      existing = `#{compiler_cmd} env`.split("\n").find { |line| line.start_with?('CRYSTAL_PATH') }
-      [existing, *crystal_paths].join(':')
+      existing = `#{compiler_cmd} env CRYSTAL_PATH`.strip
+      ["CRYSTAL_PATH=#{existing}", *crystal_paths].join(':')
     end
 
     def anyolite_glue
       "-L#{RbConfig::CONFIG['libdir']} #{RbConfig::CONFIG['LIBRUBYARG_SHARED']} " \
-      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/data_helper.o")} " \
-      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/error_helper.o")} " \
-      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/return_functions.o")} " \
-      "#{File.expand_path("#{__dir__}/../../ext/polycrystal/script_helper.o")} "
+        "#{File.expand_path("#{__dir__}/../../ext/polycrystal/data_helper.o")} " \
+        "#{File.expand_path("#{__dir__}/../../ext/polycrystal/error_helper.o")} " \
+        "#{File.expand_path("#{__dir__}/../../ext/polycrystal/return_functions.o")} " \
+        "#{File.expand_path("#{__dir__}/../../ext/polycrystal/script_helper.o")} "
     end
 
     def compiler_cmd
@@ -161,6 +183,21 @@ module Polycrystal
       system("git clone -b external-ruby https://github.com/ahrushetskyi/anyolite.git #{local_path}/anyolite")
 
       local_path
+    end
+
+    def compile
+      # run compiler
+      puts command
+      raise 'Failed to compile crystal module' unless system(command)
+    end
+
+    def compile_hash
+      paths = crystal_paths.sort + [in_file.path]
+      paths.map { |path| path_hash(path) }.reduce(:^).to_s(32)
+    end
+
+    def path_hash(path)
+      Zlib.crc32(`ls -lRF #{path}`)
     end
   end
 end

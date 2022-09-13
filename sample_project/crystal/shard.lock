@@ -1,0 +1,14 @@
+version: 2.0
+shards:
+  bindata:
+    git: https://github.com/spider-gazelle/bindata.git
+    version: 1.10.0
+
+  jwt:
+    git: https://github.com/crystal-community/jwt.git
+    version: 1.6.0
+
+  openssl_ext:
+    git: https://github.com/spider-gazelle/openssl_ext.git
+    version: 2.2.0
+

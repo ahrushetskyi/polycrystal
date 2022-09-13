@@ -1,7 +1,13 @@
+require "jwt"
+
 class CrystalModule
     class SomeThing
         def some_method
             69.0
+        end
+
+        def check_deps
+            JWT.encode({"test" => "key"}, "SecretKey", JWT::Algorithm::HS256)
         end
     end
 

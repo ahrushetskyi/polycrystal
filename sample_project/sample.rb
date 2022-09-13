@@ -11,8 +11,4 @@ Polycrystal::Registry.register(
   modules: ['CrystalModule']
 )
 
-build_path = File.expand_path("#{__dir__}/build")
-
-FileUtils.mkdir_p(build_path)
-
-Polycrystal::Loader.new(build_path: build_path).load
+Polycrystal.load
